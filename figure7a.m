@@ -25,7 +25,7 @@ for iter = 1:nRuns
             Conds(iter,4)];
     
     curK = calcEightStateRates(pK, curAA);
-    [~,~,curTint,curText, ~, ~, ~] = runEightState(curK, [1 1e8], pHs, [25e-9 25e-9], 20e-7, [1e-7 1e-7]);
+    [~,~,curTint,curText, ~, ~, ~] = runEightState(curK, [0 1e8], pHs, [25e-9 25e-9], 20e-7, [1e-7 1e-7]);
     
     EqTint(iter) = calcEqT(curTint);
     EqText(iter) = calcEqT(curText);

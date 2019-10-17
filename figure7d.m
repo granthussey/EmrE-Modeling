@@ -1,19 +1,20 @@
-function [T,fig] = figure7b(pHs)
+function [T,fig] = figure7d(pHs)
 
-% Initialize variables to test three uniformly-constant AA rates 
-AltK = @(x) [x;x;x;x;x;x;x;x];
-Poss_AA = [1, 10, 100, 1000];
-[~,nAA] = size(Poss_AA);
+% Initialize alternating access possibilities
+Poss_AA = [1, 2, 3, 4, 5];
+AAconds = [Poss_AA',flipud(Poss_AA'),Poss_AA',flipud(Poss_AA')];
+[nAA,~] = size(AAconds);
 
 % Initialize ranges for pKa and pKd values
-Poss_pKa = (4:.05:10)';
-Poss_pKd = (3:.05:9)';
+Poss_pKa = (4:.01:10)';
+Poss_pKd = (3:.01:9)';
 pKConds = [Poss_pKa,flipud(Poss_pKa),Poss_pKd,flipud(Poss_pKd)];
 [npK,~] = size(pKConds);
 
-nSim = npK*nAA;                 % Total number of simulations are a product of unique Roff
-                                % values and alternating access values to be tested.
-                                
+% Total number of simulations are a product of both varibles to iterate
+% over.
+nSim = npK*nAA;
+
 % Initialize save data indexed by simulation number
 EqTint = zeros(nSim,1);
 EqText = zeros(nSim,1);
@@ -28,17 +29,26 @@ graphEqText = zeros(npK,nAA);
 graphUptake = zeros(npK,nAA);
 graphEfflux = zeros(npK,nAA);
 graph_Ratio_kOff = zeros(npK,nAA);
+graph_AARatios   = zeros(npK,nAA);
 
 iter = 1;
+
 for iAA = 1:nAA
     
-    curAA = AltK(Poss_AA(iAA));
+    curAA = [AAconds(iAA,1);...             % k17 PROTON
+        AAconds(iAA,1);...                  % k18 PROTON
+        AAconds(iAA,2);...                  % k19 APO
+        AAconds(iAA,2);...                  % k20 APO
+        AAconds(iAA,3);...                  % k21 DRUG
+        AAconds(iAA,3);...                  % k22 DRUG
+        AAconds(iAA,4);...                  % k23 DUO
+        AAconds(iAA,4)];
     
     for ipK = 1:npK
         
         curpK = pKConds(ipK,:);
-        curK = calcEightStateRates(curpK, curAA);
         
+        curK = calcEightStateRates(curpK, curAA);
         [~,~,curTint,curText, ~, ~, ~] = runEightState(curK, [0 1e8], pHs, [25e-9 25e-9], 20e-7, [1e-7 1e-7]);
         
         EqTint(iter) = calcEqT(curTint);
@@ -47,7 +57,7 @@ for iAA = 1:nAA
         Efflux(iter) = EqText(iter)/EqTint(iter);
         
         pKs(iter,:)  = pKConds(ipK,:);
-        AAs(iter,:)  = [curAA(1),curAA(3),curAA(5),curAA(6)];
+        AAs(iter,:)  = [AAconds(iAA,1),AAconds(iAA,2),AAconds(iAA,3),AAconds(iAA,4)];
                 
         graphEqTint(ipK,iAA) = EqTint(iter);
         graphEqText(ipK,iAA) = EqText(iter);
@@ -59,6 +69,7 @@ for iAA = 1:nAA
         GRAPH_kOff_pK2 = 1e10.*10.^(-1.*pKConds(ipK,2));
         
         graph_Ratio_kOff(ipK,iAA) = GRAPH_kOff_pK1./GRAPH_kOff_pK2;
+        graph_AARatios(ipK,iAA) = AAconds(iAA,1)./AAconds(iAA,2);
         
         iter = iter + 1;
         
@@ -76,7 +87,7 @@ fig = figure;
 loglog(graph_Ratio_kOff,graphUptake)
 xlabel('R_{off}')
 ylabel('T_{r}')
-legend('k_{AA} = 1','k_{AA} = 10','k_{AA} = 100', 'k_{AA} = 1000');
+legend('R_{AA} = .2','R_{AA} = .5','R_{AA} = 1','R_{AA} = 2','R_{AA} = 5')
 
 end
 
